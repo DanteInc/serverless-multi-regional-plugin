@@ -1,0 +1,1 @@
+# serverless-multi-regional-plugin
