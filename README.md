@@ -12,9 +12,9 @@ npm install --save-dev serverless-multi-regional-plugin
 
 2. Create your hosted zone and certificates
 
-3. serverless.yml:
+> Using the diagram above as an example the osted zone would be for _example.com_ and the certificate would be for _*.example.com_. Create the same certificate in each region to support the regional endpoints. The global endpoint requires a certificate in the us-east-1 region.
 
-> NOTE: Need to do a double pass deployment to get each targetDomainName to workaround cloudformation bug in AWS::ApiGateway::DomainName. The dependent resources are conditionally excluded until the targetDomainNames are configured.
+3. serverless.yml:
 
 ```
 plugins:
@@ -48,6 +48,9 @@ custom:
       prefix: aws-cloudfront/api/${opt:stage}/${self:service}
     # webACLId:
 ```
+4. Deploy to each region
+
+> NOTE: We need to do a double pass deployment to get each targetDomainName to workaround a cloudformation bug in AWS::ApiGateway::DomainName. The dependent resources are conditionally excluded until the targetDomainNames are configured.
 
 
 ## Related Documentation
