@@ -12,7 +12,7 @@ npm install --save-dev serverless-multi-regional-plugin
 
 2. Create your hosted zone and certificates
 
-> Using the diagram above as an example the osted zone would be for _example.com_ and the certificate would be for _*.example.com_. Create the same certificate in each region to support the regional endpoints. The global endpoint requires a certificate in the us-east-1 region.
+> Using the diagram above as an example the hosted zone would be for _example.com_ and the certificate would be for _*.example.com_. Create the same certificate in each region to support the regional endpoints. The global endpoint requires a certificate in the us-east-1 region.
 
 3. serverless.yml:
 
@@ -28,12 +28,12 @@ custom:
       hostedZoneId: Z1UJRXOUMOOFQ8
       targetDomainName: d-xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
       acmCertificateArn: arn:aws:acm:us-east-1:870671212434:certificate/55555555-5555-5555-5555-5555555555555555
-      healthCheckId: 44444444-4444-4444-4444-444444444444
+      # healthCheckId: 44444444-4444-4444-4444-444444444444
     us-west-2:
       hostedZoneId: Z2OJLYMUO9EFXC
       targetDomainName: d-yyyyyyyyyy.execute-api.us-west-2.amazonaws.com
       acmCertificateArn: arn:aws:acm:us-west-2:111111111111:certificate/55555555-5555-5555-5555-5555555555555555
-      healthCheckId: 33333333-3333-3333-3333-333333333333
+      # healthCheckId: 33333333-3333-3333-3333-333333333333
   globalEndpoint:
     region: us-east-1
     hostedZoneId: ZZZZZZZZZZZZZZ
