@@ -3,8 +3,8 @@ Resources:
   ApiRegionalDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
-      DomainName: ${self:custom.regionalEndpoints.domainName}
-      RegionalCertificateArn: ${self:custom.regionalEndpoints.${opt:region}.acmCertificateArn}
+      DomainName: ${self:custom.dns.regionalDomainName}
+      RegionalCertificateArn: ${self:custom.dns.${opt:region}.acmCertificateArn}
       EndpointConfiguration:
         Types:
           - REGIONAL
@@ -19,7 +19,7 @@ Resources:
   ApiRegionalEndpointRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId: ${self:custom.regionalEndpoints.hostedZoneId}
+      HostedZoneId: ${self:custom.dns.hostedZoneId}
       Name:
         Fn::Join:
           - ""
@@ -27,11 +27,11 @@ Resources:
             - .
       Region: ${opt:region}
       SetIdentifier: ${opt:region}
-      HealthCheckId: ${self:custom.regionalEndpoints.${opt:region}.healthCheckId}
+      HealthCheckId: ${self:custom.dns.${opt:region}.healthCheckId}
       Type: A
       AliasTarget:
-        HostedZoneId: ${self:custom.regionalEndpoints.${opt:region}.hostedZoneId}
-        DNSName: ${self:custom.regionalEndpoints.${opt:region}.targetDomainName}
+        HostedZoneId: ${self:custom.dns.${opt:region}.hostedZoneId}
+        DNSName: ${self:custom.dns.${opt:region}.targetDomainName}
           # Fn::GetAtt:
           #   - ApiRegionalDomainName
           #   - RegionalDomainName
@@ -42,17 +42,16 @@ Resources:
         Comment: ${opt:stage}-${self:service} (${opt:region})
         Origins:
           - Id: ApiGateway
-            DomainName: ${self:custom.globalEndpoint.domainName}
+            DomainName: ${self:custom.dns.domainName}
             OriginPath: /${opt:stage}
             CustomOriginConfig:
-              HTTPPort: 80
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
               OriginSSLProtocols: [ TLSv1.2 ]
         Enabled: true
         HttpVersion: http2
-        Aliases: ${self:custom.globalEndpoint.aliases}
-        PriceClass: ${self:custom.globalEndpoint.priceClass}
+        Aliases: ${self:custom.cdn.aliases}
+        PriceClass: ${self:custom.cdn.priceClass}
         DefaultCacheBehavior:
           TargetOriginId: ApiGateway
           AllowedMethods:
@@ -70,7 +69,7 @@ Resources:
           Compress: true
           ForwardedValues:
             QueryString: true
-            Headers: ${self:custom.globalEndpoint.headers}
+            Headers: ${self:custom.cdn.headers}
             # Headers:
             #   - Accept
             #   - Authorization
@@ -80,18 +79,18 @@ Resources:
           DefaultTTL: 0
           ViewerProtocolPolicy: https-only
         ViewerCertificate:
-          AcmCertificateArn: ${self:custom.globalEndpoint.acmCertificateArn}
+          AcmCertificateArn: ${self:custom.cdn.acmCertificateArn}
           SslSupportMethod: sni-only
         Logging:
           IncludeCookies: true
-          Bucket: ${self:custom.globalEndpoint.logging.bucket}
-          Prefix: ${self:custom.globalEndpoint.logging.prefix}
-        WebACLId: ${self:custom.globalEndpoint.webACLId}
+          Bucket: ${self:custom.cdn.logging.bucket}
+          Prefix: ${self:custom.cdn.logging.prefix}
+        WebACLId: ${self:custom.cdn.webACLId}
   ApiGlobalEndpointRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId: ${self:custom.globalEndpoint.hostedZoneId}
-      Name: ${self:custom.globalEndpoint.domainName}.
+      HostedZoneId: ${self:custom.dns.hostedZoneId}
+      Name: ${self:custom.dns.domainName}.
       Type: A
       AliasTarget:
         HostedZoneId: Z2FDTNDATAQYW2
@@ -116,4 +115,4 @@ Outputs:
       Fn::Join:
         - ""
         - - https://
-          - ${self:custom.globalEndpoint.domainName}
+          - ${self:custom.dns.domainName}

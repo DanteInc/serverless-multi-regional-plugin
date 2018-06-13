@@ -21,11 +21,12 @@ plugins:
   - serverless-multi-regional-plugin
 
 custom:
-  regionalEndpoints:
+  dns:
     hostedZoneId: ZZZZZZZZZZZZZZ
-    domainName: ${opt:stage}-${self:service}.example.com
+    domainName: ${self:service}.example.com
+    regionalDomainName: ${opt:stage}-${self:custom.dns.domainName}
     us-east-1:
-      hostedZoneId: Z1UJRXOUMOOFQ8
+      hostedZoneId: Z1UJRXOUMOOFQ8 # https://docs.aws.amazon.com/general/latest/gr/rande.html#apigateway_region
       targetDomainName: d-xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
       acmCertificateArn: arn:aws:acm:us-east-1:870671212434:certificate/55555555-5555-5555-5555-5555555555555555
       # healthCheckId: 44444444-4444-4444-4444-444444444444
@@ -34,15 +35,13 @@ custom:
       targetDomainName: d-yyyyyyyyyy.execute-api.us-west-2.amazonaws.com
       acmCertificateArn: arn:aws:acm:us-west-2:111111111111:certificate/55555555-5555-5555-5555-5555555555555555
       # healthCheckId: 33333333-3333-3333-3333-333333333333
-  globalEndpoint:
+  cdn:
     region: us-east-1
-    hostedZoneId: ZZZZZZZZZZZZZZ
-    domainName: ${self:service}.example.com
-    aliases: 
-      - ${self:custom.globalEndpoint.domainName}
+    aliases:
+      - ${self:custom.dns.domainName}
     # headers:
     priceClass: PriceClass_100
-    acmCertificateArn: ${self:custom.regionalEndpoints.us-east-1.acmCertificateArn}
+    acmCertificateArn: ${self:custom.dns.us-east-1.acmCertificateArn}
     logging:
       bucket: example-auditing.s3.amazonaws.com
       prefix: aws-cloudfront/api/${opt:stage}/${self:service}

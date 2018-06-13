@@ -14,7 +14,25 @@ class Plugin {
   }
 
   createDeploymentArtifacts() {
-    const regionalDomainName = this.serverless.service.custom.regionalEndpoints.domainName;
+    if (!this.serverless.service.custom.cdn) {
+      this.serverless.service.custom.cdn = {};
+    }
+
+    if (!this.serverless.service.custom.dns) {
+      this.serverless.service.custom.dns = {};
+    }
+
+    const disabled = this.serverless.service.custom.cdn.disabled;
+    if (disabled != undefined && disabled) {
+      return;
+    }
+
+    const enabled = this.serverless.service.custom.cdn.enabled;
+    if (enabled != undefined && !enabled.includes(this.options.stage)) {
+      return;
+    }
+
+    const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
     if (!regionalDomainName) {
       return;
     }
@@ -35,9 +53,10 @@ class Plugin {
     this.prepareApiRegionalDomainName(resources);
     this.prepareApiRegionalEndpointRecord(resources);
 
-    const globalDomainName = this.serverless.service.custom.globalEndpoint.domainName;
-    const cloudFrontRegion = this.serverless.service.custom.globalEndpoint.region;
-    if (!globalDomainName || cloudFrontRegion !== this.options.region) {
+    const globalDomainName = this.serverless.service.custom.dns.domainName;
+    const targetDomainName = this.serverless.service.custom.dns[this.options.region].targetDomainName;
+    const cloudFrontRegion = this.serverless.service.custom.cdn.region;
+    if (!globalDomainName || !targetDomainName || cloudFrontRegion !== this.options.region) {
       delete resources.Resources.ApiDistribution;
       delete resources.Resources.ApiGlobalEndpointRecord;
       delete resources.Outputs.ApiDistribution;
@@ -56,25 +75,25 @@ class Plugin {
     this.prepareLogging(distributionConfig);
     this.prepareWaf(distributionConfig);
 
-    this.prepareApiGlobalEndpointRecord(resources);    
+    this.prepareApiGlobalEndpointRecord(resources);
   }
 
   prepareApiRegionalDomainName(resources) {
     const properties = resources.Resources.ApiRegionalDomainName.Properties;
 
-    const regionalDomainName = this.serverless.service.custom.regionalEndpoints.domainName;
+    const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
     properties.DomainName = regionalDomainName;
 
-    const acmCertificateArn = this.serverless.service.custom.regionalEndpoints[this.options.region].acmCertificateArn;
+    const acmCertificateArn = this.serverless.service.custom.dns[this.options.region].acmCertificateArn;
     if (acmCertificateArn) {
       properties.RegionalCertificateArn = acmCertificateArn;
     } else {
       delete properties.RegionalCertificateArn;
-    }    
+    }
   }
 
   prepareApiRegionalEndpointRecord(resources) {
-    const targetDomainName = this.serverless.service.custom.regionalEndpoints[this.options.region].targetDomainName;
+    const targetDomainName = this.serverless.service.custom.dns[this.options.region].targetDomainName;
     if (!targetDomainName) {
       delete resources.Resources.ApiRegionalEndpointRecord;
       delete resources.Outputs.RegionalEndpoint;
@@ -83,18 +102,17 @@ class Plugin {
 
     const properties = resources.Resources.ApiRegionalEndpointRecord.Properties;
 
-    const hostedZoneId = this.serverless.service.custom.regionalEndpoints.hostedZoneId;
+    const hostedZoneId = this.serverless.service.custom.dns.hostedZoneId;
     if (hostedZoneId) {
       properties.HostedZoneId = hostedZoneId;
-
     } else {
       delete properties.hostedZoneId;
     }
 
     properties.Region = this.options.region;
     properties.SetIdentifier = this.options.region;
-    
-    const healthCheckId = this.serverless.service.custom.regionalEndpoints[this.options.region].healthCheckId;
+
+    const healthCheckId = this.serverless.service.custom.dns[this.options.region].healthCheckId;
     if (healthCheckId) {
       properties.HealthCheckId = healthCheckId;
     } else {
@@ -103,12 +121,12 @@ class Plugin {
 
     const aliasTarget = properties.AliasTarget;
 
-    const regionalHostedZoneId = this.serverless.service.custom.regionalEndpoints[this.options.region].hostedZoneId;
+    const regionalHostedZoneId = this.serverless.service.custom.dns[this.options.region].hostedZoneId;
     if (regionalHostedZoneId) {
       aliasTarget.HostedZoneId = regionalHostedZoneId;
     } else {
       delete aliasTarget.HostedZoneId;
-    }    
+    }
 
     if (targetDomainName) {
       aliasTarget.DNSName = targetDomainName;
@@ -119,7 +137,7 @@ class Plugin {
     const elements = resources.Outputs.RegionalEndpoint.Value['Fn::Join'][1];
     if (elements[2]) {
       elements[2] = `/${this.options.stage}`;
-    }    
+    }
   }
 
   prepareComment(distributionConfig) {
@@ -128,14 +146,14 @@ class Plugin {
   }
 
   prepareOrigins(distributionConfig) {
-    const regionalDomainName = this.serverless.service.custom.regionalEndpoints.domainName;
+    const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
 
     distributionConfig.Origins[0].DomainName = regionalDomainName;
     distributionConfig.Origins[0].OriginPath = `/${this.options.stage}`;
   }
 
   prepareHeaders(distributionConfig) {
-    const headers = this.serverless.service.custom.globalEndpoint.headers;
+    const headers = this.serverless.service.custom.cdn.headers;
 
     if (headers) {
       distributionConfig.DefaultCacheBehavior.ForwardedValues.Headers = headers;
@@ -145,17 +163,17 @@ class Plugin {
   }
 
   preparePriceClass(distributionConfig) {
-    const priceClass = this.serverless.service.custom.globalEndpoint.priceClass;
+    const priceClass = this.serverless.service.custom.cdn.priceClass;
 
     if (priceClass) {
       distributionConfig.PriceClass = priceClass;
     } else {
-      distributionConfig.PriceClass = 'PriceClass_All';
+      distributionConfig.PriceClass = 'PriceClass_100';
     }
   }
 
   prepareAliases(distributionConfig) {
-    const aliases = this.serverless.service.custom.globalEndpoint.aliases;
+    const aliases = this.serverless.service.custom.cdn.aliases;
 
     if (aliases) {
       distributionConfig.Aliases = aliases;
@@ -165,30 +183,31 @@ class Plugin {
   }
 
   prepareCertificate(distributionConfig) {
-    const acmCertificateArn = this.serverless.service.custom.globalEndpoint.acmCertificateArn;
+    const acmCertificateArn = this.serverless.service.custom.cdn.acmCertificateArn;
     if (acmCertificateArn) {
       distributionConfig.ViewerCertificate.AcmCertificateArn = acmCertificateArn;
     } else {
       delete distributionConfig.ViewerCertificate;
-    }    
+    }
   }
 
   prepareLogging(distributionConfig) {
-    const logging = this.serverless.service.custom.globalEndpoint.logging;
+    const logging = this.serverless.service.custom.cdn.logging;
 
     if (logging) {
-      distributionConfig.Logging.Bucket = logging.bucket;
-      distributionConfig.Logging.Prefix = logging.prefix;
+      distributionConfig.Logging.Bucket = `${logging.bucketName}.s3.amazonaws.com`;
+      distributionConfig.Logging.Prefix = logging.prefix || `aws-cloudfront/api/${this.options.stage}/${this.serverless.getProvider('aws').naming.getStackName()}`;
+
     } else {
       delete distributionConfig.Logging;
     }
   }
 
   prepareWaf(distributionConfig) {
-    const WebACLId = this.serverless.service.custom.globalEndpoint.WebACLId;
+    const webACLId = this.serverless.service.custom.cdn.webACLId;
 
-    if (WebACLId) {
-      distributionConfig.WebACLId = WebACLId;
+    if (webACLId) {
+      distributionConfig.WebACLId = webACLId;
     } else {
       delete distributionConfig.WebACLId;
     }
@@ -197,21 +216,21 @@ class Plugin {
   prepareApiGlobalEndpointRecord(resources) {
     const properties = resources.Resources.ApiGlobalEndpointRecord.Properties;
 
-    const hostedZoneId = this.serverless.service.custom.globalEndpoint.hostedZoneId;
+    const hostedZoneId = this.serverless.service.custom.dns.hostedZoneId;
     if (hostedZoneId) {
       properties.HostedZoneId = hostedZoneId;
     } else {
       delete properties.hostedZoneId;
     }
 
-    const globalDomainName = this.serverless.service.custom.globalEndpoint.domainName;
+    const globalDomainName = this.serverless.service.custom.dns.domainName;
     properties.Name = `${globalDomainName}.`;
 
     const elements = resources.Outputs.GlobalEndpoint.Value['Fn::Join'][1];
     if (elements[1]) {
       elements[1] = globalDomainName;
-    }    
-  }  
+    }
+  }
 }
 
 module.exports = Plugin;
