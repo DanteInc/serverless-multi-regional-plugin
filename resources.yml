@@ -1,0 +1,118 @@
+---
+Resources:
+  ApiRegionalDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: ${self:custom.dns.regionalDomainName}
+      RegionalCertificateArn: ${self:custom.dns.${opt:region}.acmCertificateArn}
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  ApiRegionalBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      # BasePath: !Ref basePath
+      DomainName:
+        Ref: ApiRegionalDomainName
+      RestApiId:
+        Ref: ApiGatewayRestApi
+  ApiRegionalEndpointRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: ${self:custom.dns.hostedZoneId}
+      Name:
+        Fn::Join:
+          - ""
+          - - Ref: ApiRegionalDomainName
+            - .
+      Region: ${opt:region}
+      SetIdentifier: ${opt:region}
+      HealthCheckId: ${self:custom.dns.${opt:region}.healthCheckId}
+      Type: A
+      AliasTarget:
+        HostedZoneId: ${self:custom.dns.${opt:region}.hostedZoneId}
+        DNSName: ${self:custom.dns.${opt:region}.targetDomainName}
+          # Fn::GetAtt:
+          #   - ApiRegionalDomainName
+          #   - RegionalDomainName
+  ApiDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: ${opt:stage}-${self:service} (${opt:region})
+        Origins:
+          - Id: ApiGateway
+            DomainName: ${self:custom.dns.domainName}
+            OriginPath: /${opt:stage}
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [ TLSv1.2 ]
+        Enabled: true
+        HttpVersion: http2
+        Aliases: ${self:custom.cdn.aliases}
+        PriceClass: ${self:custom.cdn.priceClass}
+        DefaultCacheBehavior:
+          TargetOriginId: ApiGateway
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+          CachedMethods:
+            - HEAD
+            - GET
+            - OPTIONS
+          Compress: true
+          ForwardedValues:
+            QueryString: true
+            Headers: ${self:custom.cdn.headers}
+            # Headers:
+            #   - Accept
+            #   - Authorization
+            Cookies:
+              Forward: all
+          MinTTL: 0
+          DefaultTTL: 0
+          ViewerProtocolPolicy: https-only
+        ViewerCertificate:
+          AcmCertificateArn: ${self:custom.cdn.acmCertificateArn}
+          SslSupportMethod: sni-only
+        Logging:
+          IncludeCookies: true
+          Bucket: ${self:custom.cdn.logging.bucket}
+          Prefix: ${self:custom.cdn.logging.prefix}
+        WebACLId: ${self:custom.cdn.webACLId}
+  ApiGlobalEndpointRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: ${self:custom.dns.hostedZoneId}
+      Name: ${self:custom.dns.domainName}.
+      Type: A
+      AliasTarget:
+        HostedZoneId: Z2FDTNDATAQYW2
+        DNSName:
+          Fn::GetAtt:
+            - ApiDistribution
+            - DomainName
+
+Outputs:
+  ApiDistribution:
+    Value:
+      Fn::GetAtt: [ ApiDistribution, DomainName ]
+  RegionalEndpoint:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: ApiRegionalDomainName
+          - /${opt:stage}
+  GlobalEndpoint:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - ${self:custom.dns.domainName}

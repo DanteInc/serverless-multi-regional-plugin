@@ -1,0 +1,29 @@
+{
+  "name": "serverless-multi-regional-plugin",
+  "version": "1.0.0",
+  "description": "Deploy an API Gateway service in multiple regions with a global CloudFront distribution",
+  "author": "John Gilbert <john.gilbert@danteinc.com> (danteinc.com)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DanteInc/serverless-multi-regional-plugin.git"
+  },
+  "keywords": [
+    "serverless",
+    "serverless plugin",
+    "api gateway",
+    "cloudfront",
+    "route53",
+    "lambda",
+    "aws",
+    "aws lambda",
+    "amazon web services",
+    "serverless.com"
+  ],
+  "main": "index.js",
+  "dependencies": {
+    "chalk": "^2.0.0",
+    "js-yaml": "^3.10.0",
+    "lodash": "^4.13.1"
+  }
+}
