@@ -30,11 +30,14 @@ Resources:
       HealthCheckId: ${self:custom.dns.${opt:region}.healthCheckId}
       Type: A
       AliasTarget:
-        HostedZoneId: ${self:custom.dns.${opt:region}.hostedZoneId}
-        DNSName: ${self:custom.dns.${opt:region}.targetDomainName}
-          # Fn::GetAtt:
-          #   - ApiRegionalDomainName
-          #   - RegionalDomainName
+        HostedZoneId:
+          Fn::GetAtt:
+            - ApiRegionalDomainName
+            - RegionalHostedZoneId
+        DNSName:
+          Fn::GetAtt:
+            - ApiRegionalDomainName
+            - RegionalDomainName
   ApiDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -42,7 +45,7 @@ Resources:
         Comment: ${opt:stage}-${self:service} (${opt:region})
         Origins:
           - Id: ApiGateway
-            DomainName: ${self:custom.dns.domainName}
+            DomainName: ${self:custom.dns.regionalDomainName}
             OriginPath: /${opt:stage}
             CustomOriginConfig:
               HTTPSPort: 443

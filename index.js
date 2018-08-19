@@ -1,6 +1,5 @@
 const path = require('path');
 const _ = require('lodash');
-const chalk = require('chalk');
 const yaml = require('js-yaml');
 const fs = require('fs');
 
@@ -27,11 +26,6 @@ class Plugin {
       return;
     }
 
-    const enabled = this.serverless.service.custom.cdn.enabled;
-    if (enabled != undefined && !enabled.includes(this.options.stage)) {
-      return;
-    }
-
     const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
     if (!regionalDomainName) {
       return;
@@ -54,9 +48,11 @@ class Plugin {
     this.prepareApiRegionalEndpointRecord(resources);
 
     const globalDomainName = this.serverless.service.custom.dns.domainName;
-    const targetDomainName = this.serverless.service.custom.dns[this.options.region].targetDomainName;
     const cloudFrontRegion = this.serverless.service.custom.cdn.region;
-    if (!globalDomainName || !targetDomainName || cloudFrontRegion !== this.options.region) {
+    const enabled = this.serverless.service.custom.cdn.enabled;
+    if (!globalDomainName ||
+      cloudFrontRegion !== this.options.region ||
+      (enabled && !enabled.includes(this.options.stage))) {
       delete resources.Resources.ApiDistribution;
       delete resources.Resources.ApiGlobalEndpointRecord;
       delete resources.Outputs.ApiDistribution;
@@ -93,13 +89,6 @@ class Plugin {
   }
 
   prepareApiRegionalEndpointRecord(resources) {
-    const targetDomainName = this.serverless.service.custom.dns[this.options.region].targetDomainName;
-    if (!targetDomainName) {
-      delete resources.Resources.ApiRegionalEndpointRecord;
-      delete resources.Outputs.RegionalEndpoint;
-      return;
-    }
-
     const properties = resources.Resources.ApiRegionalEndpointRecord.Properties;
 
     const hostedZoneId = this.serverless.service.custom.dns.hostedZoneId;
@@ -117,21 +106,6 @@ class Plugin {
       properties.HealthCheckId = healthCheckId;
     } else {
       delete properties.HealthCheckId;
-    }
-
-    const aliasTarget = properties.AliasTarget;
-
-    const regionalHostedZoneId = this.serverless.service.custom.dns[this.options.region].hostedZoneId;
-    if (regionalHostedZoneId) {
-      aliasTarget.HostedZoneId = regionalHostedZoneId;
-    } else {
-      delete aliasTarget.HostedZoneId;
-    }
-
-    if (targetDomainName) {
-      aliasTarget.DNSName = targetDomainName;
-    } else {
-      delete aliasTarget.DNSName;
     }
 
     const elements = resources.Outputs.RegionalEndpoint.Value['Fn::Join'][1];

@@ -1,6 +1,6 @@
 {
   "name": "serverless-multi-regional-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Deploy an API Gateway service in multiple regions with a global CloudFront distribution",
   "author": "John Gilbert <john.gilbert@danteinc.com> (danteinc.com)",
   "license": "MIT",
@@ -22,7 +22,6 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "chalk": "^2.0.0",
     "js-yaml": "^3.10.0",
     "lodash": "^4.13.1"
   }
