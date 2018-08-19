@@ -33,7 +33,7 @@ class Plugin {
 
     const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
 
-    const filename = path.resolve(__dirname, 'resources.yml');
+    const filename = path.resolve(__dirname, 'resources.yml'); // eslint-disable-line
     const content = fs.readFileSync(filename, 'utf-8');
     const resources = yaml.safeLoad(content, {
       filename: filename
