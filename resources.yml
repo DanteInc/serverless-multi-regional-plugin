@@ -16,10 +16,21 @@ Resources:
         Ref: ApiRegionalDomainName
       RestApiId:
         Ref: ApiGatewayRestApi
+  ApiRegionalHealthCheck: 
+    Type: AWS::Route53::HealthCheck
+    Properties: 
+      HealthCheckConfig: 
+        Type: HTTPS
+        ResourcePath: /healthcheck
+        FullyQualifiedDomainName: 
+          Ref: ApiRegionalDomainName
+        RequestInterval: 30
+        FailureThreshold: 3
   ApiRegionalEndpointRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: ${self:custom.dns.hostedZoneId}
+      HostedZoneName: ${self:custom.dns.hostedZoneName}
       Name:
         Fn::Join:
           - ""
@@ -27,7 +38,8 @@ Resources:
             - .
       Region: ${opt:region}
       SetIdentifier: ${opt:region}
-      HealthCheckId: ${self:custom.dns.${opt:region}.healthCheckId}
+      HealthCheckId: 
+        Ref: ApiRegionalHealthCheck
       Type: A
       AliasTarget:
         HostedZoneId:
@@ -93,6 +105,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: ${self:custom.dns.hostedZoneId}
+      HostedZoneName: ${self:custom.dns.hostedZoneName}
       Name: ${self:custom.dns.domainName}.
       Type: A
       AliasTarget:

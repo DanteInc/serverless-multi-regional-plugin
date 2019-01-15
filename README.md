@@ -22,7 +22,6 @@ plugins:
 
 custom:
   dns:
-    hostedZoneId: ZZZZZZZZZZZZZZ
     domainName: ${self:service}.example.com
     regionalDomainName: ${opt:stage}-${self:custom.dns.domainName}
     us-east-1:
@@ -31,6 +30,7 @@ custom:
     us-west-2:
       acmCertificateArn: arn:aws:acm:us-west-2:111111111111:certificate/55555555-5555-5555-5555-5555555555555555
       # healthCheckId: 33333333-3333-3333-3333-333333333333
+      # healthCheck
   cdn:
     region: us-east-1
     aliases:

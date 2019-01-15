@@ -39,39 +39,42 @@ class Plugin {
       filename: filename
     });
 
-    this.prepareResources(resources);
-    return _.merge(baseResources, resources);
+    return this.prepareResources(resources).then(() => {
+      _.merge(baseResources, resources);
+    });
   }
 
   prepareResources(resources) {
-    this.prepareApiRegionalDomainName(resources);
-    this.prepareApiRegionalEndpointRecord(resources);
+    this.fullDomainName = this.serverless.service.custom.dns.domainName;
+    this.hostName = this.fullDomainName.substr(this.fullDomainName.indexOf('.') + 1);
 
-    const globalDomainName = this.serverless.service.custom.dns.domainName;
     const cloudFrontRegion = this.serverless.service.custom.cdn.region;
     const enabled = this.serverless.service.custom.cdn.enabled;
-    if (!globalDomainName ||
+    if (!this.fullDomainName ||
       cloudFrontRegion !== this.options.region ||
       (enabled && !enabled.includes(this.options.stage))) {
       delete resources.Resources.ApiDistribution;
       delete resources.Resources.ApiGlobalEndpointRecord;
       delete resources.Outputs.ApiDistribution;
       delete resources.Outputs.GlobalEndpoint;
-      return;
+      return Promise.resolve();
     }
 
     const distributionConfig = resources.Resources.ApiDistribution.Properties.DistributionConfig;
-
+    this.prepareApiRegionalEndpointRecord(resources);
     this.prepareComment(distributionConfig);
     this.prepareOrigins(distributionConfig);
     this.prepareHeaders(distributionConfig);
     this.preparePriceClass(distributionConfig);
     this.prepareAliases(distributionConfig);
-    this.prepareCertificate(distributionConfig);
     this.prepareLogging(distributionConfig);
     this.prepareWaf(distributionConfig);
-
     this.prepareApiGlobalEndpointRecord(resources);
+
+    return Promise.all([
+      this.prepareApiRegionalDomainName(resources),
+      this.prepareCertificate(distributionConfig)
+    ]);
   }
 
   prepareApiRegionalDomainName(resources) {
@@ -81,21 +84,30 @@ class Plugin {
     properties.DomainName = regionalDomainName;
 
     const acmCertificateArn = this.serverless.service.custom.dns[this.options.region].acmCertificateArn;
-    if (acmCertificateArn) {
+    if(acmCertificateArn) {
       properties.RegionalCertificateArn = acmCertificateArn;
+      return Promise.resolve();
     } else {
-      delete properties.RegionalCertificateArn;
+      return this.getCertArnFromHostName().then(certArn => {
+        if (certArn) {
+          properties.RegionalCertificateArn = certArn;
+        } else {
+          delete properties.RegionalCertificateArn;
+        }
+      });
     }
   }
 
   prepareApiRegionalEndpointRecord(resources) {
     const properties = resources.Resources.ApiRegionalEndpointRecord.Properties;
-
+    
     const hostedZoneId = this.serverless.service.custom.dns.hostedZoneId;
     if (hostedZoneId) {
+      delete properties.HostedZoneName;
       properties.HostedZoneId = hostedZoneId;
     } else {
-      delete properties.hostedZoneId;
+      delete properties.HostedZoneId;
+      properties.HostedZoneName = this.hostName;
     }
 
     properties.Region = this.options.region;
@@ -104,8 +116,10 @@ class Plugin {
     const healthCheckId = this.serverless.service.custom.dns[this.options.region].healthCheckId;
     if (healthCheckId) {
       properties.HealthCheckId = healthCheckId;
+      delete resources.Resources.ApiRegionalHealthCheck;
     } else {
-      delete properties.HealthCheckId;
+      const healthCheckProperties = resources.Resources.ApiRegionalHealthCheck.Properties;
+      healthCheckProperties.
     }
 
     const elements = resources.Outputs.RegionalEndpoint.Value['Fn::Join'][1];
@@ -158,10 +172,18 @@ class Plugin {
 
   prepareCertificate(distributionConfig) {
     const acmCertificateArn = this.serverless.service.custom.cdn.acmCertificateArn;
-    if (acmCertificateArn) {
+
+    if(acmCertificateArn) {
       distributionConfig.ViewerCertificate.AcmCertificateArn = acmCertificateArn;
+      return Promise.resolve();
     } else {
-      delete distributionConfig.ViewerCertificate;
+      return this.getCertArnFromHostName().then(certArn => {
+        if (certArn) {
+          distributionConfig.ViewerCertificate.AcmCertificateArn = certArn;
+        } else {
+          delete distributionConfig.ViewerCertificate;
+        }
+      });
     }
   }
 
@@ -192,18 +214,57 @@ class Plugin {
 
     const hostedZoneId = this.serverless.service.custom.dns.hostedZoneId;
     if (hostedZoneId) {
+      delete properties.HostedZoneName;
       properties.HostedZoneId = hostedZoneId;
     } else {
-      delete properties.hostedZoneId;
+      delete properties.HostedZoneId;
+      properties.HostedZoneName = this.hostName;
     }
 
-    const globalDomainName = this.serverless.service.custom.dns.domainName;
-    properties.Name = `${globalDomainName}.`;
+    properties.Name = `${this.fullDomainName}.`;
 
     const elements = resources.Outputs.GlobalEndpoint.Value['Fn::Join'][1];
     if (elements[1]) {
-      elements[1] = globalDomainName;
+      elements[1] = this.fullDomainName;
     }
+  }
+
+  /*
+  * Obtains the certification arn
+  */
+  getCertArnFromHostName() {
+    const certRequest = this.acm.listCertificates({ CertificateStatuses: ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE'] }).promise();
+
+    return certRequest.then((data) => {
+      // The more specific name will be the longest
+      let nameLength = 0;
+      let certArn;
+      const certificates = data.CertificateSummaryList;
+
+      // Derive certificate from domain name
+      certificates.forEach((certificate) => {
+        let certificateListName = certificate.DomainName;
+
+        // Looks for wild card and takes it out when checking
+        if (certificateListName[0] === '*') {
+          certificateListName = certificateListName.substr(2);
+        }
+
+        // Looks to see if the name in the list is within the given domain
+        // Also checks if the name is more specific than previous ones
+        if (this.hostName.includes(certificateListName)
+          && certificateListName.length > nameLength) {
+          nameLength = certificateListName.length;
+          certArn = certificate.CertificateArn;
+        }
+      });
+      if(certArn) {
+        this.serverless.cli.log(`The host name ${this.hostName} resolved to the following certificateArn: ${certArn}`);
+      }
+      return certArn;
+    }).catch((err) => {
+      throw Error(`Error: Could not list certificates in Certificate Manager.\n${err}`);
+    });
   }
 }
 
