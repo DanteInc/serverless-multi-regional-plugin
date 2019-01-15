@@ -26,6 +26,7 @@ Resources:
           Ref: ApiRegionalDomainName
         RequestInterval: 30
         FailureThreshold: 3
+        Regions: [us-east-1, us-west-1, us-west-2]
   ApiRegionalEndpointRecord:
     Type: AWS::Route53::RecordSet
     Properties:

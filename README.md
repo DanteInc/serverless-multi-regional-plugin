@@ -30,7 +30,6 @@ custom:
     us-west-2:
       acmCertificateArn: arn:aws:acm:us-west-2:111111111111:certificate/55555555-5555-5555-5555-5555555555555555
       # healthCheckId: 33333333-3333-3333-3333-333333333333
-      # healthCheck
   cdn:
     region: us-east-1
     aliases:
@@ -43,6 +42,10 @@ custom:
       prefix: aws-cloudfront/api/${opt:stage}/${self:service}
     # webACLId:
 ```
+
+* If an acmCertificateArn is not supplied, it will be derived from the domain name if one exists.
+* If a healthCheckId is not supplied, a minimal healthcheck will be created automatically
+
 4. Deploy to each region
 
 
