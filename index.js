@@ -83,19 +83,23 @@ class Plugin {
     const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
     properties.DomainName = regionalDomainName;
 
-    const acmCertificateArn = this.serverless.service.custom.dns[this.options.region].acmCertificateArn;
-    if(acmCertificateArn) {
-      properties.RegionalCertificateArn = acmCertificateArn;
-      return Promise.resolve();
-    } else {
-      return this.getCertArnFromHostName().then(certArn => {
-        if (certArn) {
-          properties.RegionalCertificateArn = certArn;
-        } else {
-          delete properties.RegionalCertificateArn;
-        }
-      });
+    const regionSettings = this.serverless.service.custom.dns[this.options.region];
+    if(regionSettings) {
+      const acmCertificateArn = regionSettings.acmCertificateArn;
+      if(acmCertificateArn) {
+        properties.RegionalCertificateArn = acmCertificateArn;
+        return Promise.resolve();
+      }
     }
+
+    return this.getCertArnFromHostName().then(certArn => {
+      if (certArn) {
+        properties.RegionalCertificateArn = certArn;
+      } else {
+        delete properties.RegionalCertificateArn;
+      }
+    });
+    
   }
 
   prepareApiRegionalEndpointRecord(resources) {
@@ -113,10 +117,13 @@ class Plugin {
     properties.Region = this.options.region;
     properties.SetIdentifier = this.options.region;
 
-    const healthCheckId = this.serverless.service.custom.dns[this.options.region].healthCheckId;
-    if (healthCheckId) {
-      properties.HealthCheckId = healthCheckId;
-      delete resources.Resources.ApiRegionalHealthCheck;
+    const regionSettings = this.serverless.service.custom.dns[this.options.region];
+    if(regionSettings) {
+      const healthCheckId = regionSettings.healthCheckId;
+      if (healthCheckId) {
+        properties.HealthCheckId = healthCheckId;
+        delete resources.Resources.ApiRegionalHealthCheck;
+      }
     }
 
     const elements = resources.Outputs.RegionalEndpoint.Value['Fn::Join'][1];
