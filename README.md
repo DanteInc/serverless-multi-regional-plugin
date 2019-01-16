@@ -23,7 +23,7 @@ plugins:
 custom:
   dns:
     domainName: ${self:service}.example.com
-    regionalDomainName: ${opt:stage}-${self:custom.dns.domainName}
+    regionalDomainName: ${self:custom.dns.domainName}-${opt:region}
     us-east-1:
       acmCertificateArn: arn:aws:acm:us-east-1:870671212434:certificate/55555555-5555-5555-5555-5555555555555555
       # healthCheckId: 44444444-4444-4444-4444-444444444444

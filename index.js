@@ -26,9 +26,24 @@ class Plugin {
       return;
     }
 
-    const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
-    if (!regionalDomainName) {
+    this.fullDomainName = this.serverless.service.custom.dns.domainName;
+    if (!this.fullDomainName) {
       return;
+    }
+
+    const hostSegments = this.fullDomainName.split('.');
+
+    if(hostSegments.length < 3) {
+      this.serverless.cli.log(`The domain name was not valid: ${this.fullDomainName}`);
+      return;
+    }
+
+    this.hostName = `${hostSegments[hostSegments.length-2]}.${hostSegments[hostSegments.length-1]}`;
+    this.regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
+    if (!this.regionalDomainName) {
+      const lastNonHostSegment = hostSegments[hostSegments.length-3];
+      hostSegments[hostSegments.length-3] = `${lastNonHostSegment}-${this.options.region}`;
+      this.regionalDomainName = hostSegments.join('.');
     }
 
     const baseResources = this.serverless.service.provider.compiledCloudFormationTemplate;
@@ -40,13 +55,16 @@ class Plugin {
     });
 
     return this.prepareResources(resources).then(() => {
+      this.serverless.cli.log(`The multi-regional-plugin completed resources: ${yaml.safeDump(resources)}`);
       _.merge(baseResources, resources);
     });
   }
 
   prepareResources(resources) {
-    this.fullDomainName = this.serverless.service.custom.dns.domainName;
-    this.hostName = this.fullDomainName.substr(this.fullDomainName.indexOf('.') + 1);
+    const credentials = this.serverless.providers.aws.getCredentials();
+    const acmCredentials = Object.assign({}, credentials, { region: this.options.region });
+    this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
+
 
     const cloudFrontRegion = this.serverless.service.custom.cdn.region;
     const enabled = this.serverless.service.custom.cdn.enabled;
@@ -70,6 +88,7 @@ class Plugin {
     this.prepareLogging(distributionConfig);
     this.prepareWaf(distributionConfig);
     this.prepareApiGlobalEndpointRecord(resources);
+    this.prepareApiRegionalBasePathMapping(resources);
 
     return Promise.all([
       this.prepareApiRegionalDomainName(resources),
@@ -80,8 +99,7 @@ class Plugin {
   prepareApiRegionalDomainName(resources) {
     const properties = resources.Resources.ApiRegionalDomainName.Properties;
 
-    const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
-    properties.DomainName = regionalDomainName;
+    properties.DomainName = this.regionalDomainName;
 
     const regionSettings = this.serverless.service.custom.dns[this.options.region];
     if(regionSettings) {
@@ -98,8 +116,12 @@ class Plugin {
       } else {
         delete properties.RegionalCertificateArn;
       }
-    });
-    
+    }); 
+  }
+
+  prepareApiRegionalBasePathMapping(resources) {
+    const properties = resources.Resources.ApiRegionalBasePathMapping.Properties;
+    properties.Stage = this.options.stage;
   }
 
   prepareApiRegionalEndpointRecord(resources) {
@@ -111,7 +133,7 @@ class Plugin {
       properties.HostedZoneId = hostedZoneId;
     } else {
       delete properties.HostedZoneId;
-      properties.HostedZoneName = this.hostName;
+      properties.HostedZoneName = `${this.hostName}.`;
     }
 
     properties.Region = this.options.region;
@@ -138,9 +160,7 @@ class Plugin {
   }
 
   prepareOrigins(distributionConfig) {
-    const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
-
-    distributionConfig.Origins[0].DomainName = regionalDomainName;
+    distributionConfig.Origins[0].DomainName = this.regionalDomainName;
     distributionConfig.Origins[0].OriginPath = `/${this.options.stage}`;
   }
 
@@ -222,7 +242,7 @@ class Plugin {
       properties.HostedZoneId = hostedZoneId;
     } else {
       delete properties.HostedZoneId;
-      properties.HostedZoneName = this.hostName;
+      properties.HostedZoneName = `${this.hostName}.`;
     }
 
     properties.Name = `${this.fullDomainName}.`;
