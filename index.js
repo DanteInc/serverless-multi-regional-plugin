@@ -28,13 +28,14 @@ class Plugin {
 
     this.fullDomainName = this.serverless.service.custom.dns.domainName;
     if (!this.fullDomainName) {
+      this.serverless.cli.log('The domainName parameter is required');
       return;
     }
 
     const hostSegments = this.fullDomainName.split('.');
 
     if(hostSegments.length < 3) {
-      this.serverless.cli.log(`The domain name was not valid: ${this.fullDomainName}`);
+      this.serverless.cli.log(`The domainName was not valid: ${this.fullDomainName}.`);
       return;
     }
 
@@ -65,17 +66,13 @@ class Plugin {
     const acmCredentials = Object.assign({}, credentials, { region: this.options.region });
     this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
 
-
     const cloudFrontRegion = this.serverless.service.custom.cdn.region;
     const enabled = this.serverless.service.custom.cdn.enabled;
-    if (!this.fullDomainName ||
-      cloudFrontRegion !== this.options.region ||
-      (enabled && !enabled.includes(this.options.stage))) {
+    if (cloudFrontRegion !== this.options.region || (enabled && !enabled.includes(this.options.stage))) {
       delete resources.Resources.ApiDistribution;
       delete resources.Resources.ApiGlobalEndpointRecord;
       delete resources.Outputs.ApiDistribution;
       delete resources.Outputs.GlobalEndpoint;
-      return Promise.resolve();
     }
 
     const distributionConfig = resources.Resources.ApiDistribution.Properties.DistributionConfig;
