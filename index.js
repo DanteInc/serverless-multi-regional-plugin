@@ -117,9 +117,6 @@ class Plugin {
     if (healthCheckId) {
       properties.HealthCheckId = healthCheckId;
       delete resources.Resources.ApiRegionalHealthCheck;
-    } else {
-      const healthCheckProperties = resources.Resources.ApiRegionalHealthCheck.Properties;
-      healthCheckProperties.
     }
 
     const elements = resources.Outputs.RegionalEndpoint.Value['Fn::Join'][1];
