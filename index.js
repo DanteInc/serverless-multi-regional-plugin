@@ -164,7 +164,6 @@ class Plugin {
   prepareApiRegionalHealthCheck(resources) {
     const properties = resources.Resources.ApiRegionalHealthCheck.Properties;
     properties.HealthCheckConfig.ResourcePath = `/${this.options.stage}/healthcheck`;
-    properties.HealthCheckConfig.FullyQualifiedDomainName = `!Join ['', [!Ref 'ApiGatewayRestApi', '.execute-api.${this.options.region}.amazonaws.com' ]]`;
   }
 
   prepareCdnComment(distributionConfig) {
