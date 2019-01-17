@@ -27,12 +27,18 @@ Resources:
       Stage: ${opt:stage}
   ApiRegionalHealthCheck: 
     Type: AWS::Route53::HealthCheck
+    DependsOn: ApiGatewayStubDeployment
     Properties: 
       HealthCheckConfig: 
         Type: HTTPS
-        ResourcePath: /healthcheck
-        FullyQualifiedDomainName: 
-          Ref: ApiRegionalDomainName
+        ResourcePath: /${opt:stage}/healthcheck
+        FullyQualifiedDomainName:
+          Fn::Join:
+              - ""
+              - - Ref: ApiGatewayRestApi
+                - ".execute-api."
+                - Ref: AWS::Region
+                - ".amazonaws.com"
         RequestInterval: 30
         FailureThreshold: 3
         Regions: [us-east-1, us-west-1, us-west-2]

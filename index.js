@@ -88,6 +88,7 @@ class Plugin {
 
     this.prepareApiRegionalBasePathMapping(resources);
     this.prepareApiRegionalEndpointRecord(resources);
+    this.prepareApiRegionalHealthCheck(resources);
 
     return this.prepareApiRegionalDomainName(resources)
       .then(() => {
@@ -158,6 +159,12 @@ class Plugin {
     if (elements[2]) {
       elements[2] = `/${this.options.stage}`;
     }
+  }
+
+  prepareApiRegionalHealthCheck(resources) {
+    const properties = resources.Resources.ApiRegionalHealthCheck.Properties;
+    properties.HealthCheckConfig.ResourcePath = `/${this.options.stage}/healthcheck`;
+    properties.HealthCheckConfig.FullyQualifiedDomainName = `!Join ['', [!Ref 'ApiGatewayRestApi', '.execute-api.${this.options.region}.amazonaws.com' ]]`;
   }
 
   prepareCdnComment(distributionConfig) {
