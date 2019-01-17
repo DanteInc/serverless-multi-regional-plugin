@@ -43,7 +43,7 @@ class Plugin {
     this.regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
     if (!this.regionalDomainName) {
       const lastNonHostSegment = hostSegments[hostSegments.length-3];
-      hostSegments[hostSegments.length-3] = `${lastNonHostSegment}-${this.options.region}`;
+      hostSegments[hostSegments.length-3] = `${lastNonHostSegment}-region`;
       this.regionalDomainName = hostSegments.join('.');
     }
 
