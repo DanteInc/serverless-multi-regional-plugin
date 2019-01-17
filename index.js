@@ -66,31 +66,37 @@ class Plugin {
     const acmCredentials = Object.assign({}, credentials, { region: this.options.region });
     this.acm = new this.serverless.providers.aws.sdk.ACM(acmCredentials);
 
+    const distributionConfig = resources.Resources.ApiDistribution.Properties.DistributionConfig;
     const cloudFrontRegion = this.serverless.service.custom.cdn.region;
     const enabled = this.serverless.service.custom.cdn.enabled;
+    let createCdn = true;
     if (cloudFrontRegion !== this.options.region || (enabled && !enabled.includes(this.options.stage))) {
-      delete resources.Resources.ApiDistribution;
+      createCdn = false;
       delete resources.Resources.ApiGlobalEndpointRecord;
       delete resources.Outputs.ApiDistribution;
       delete resources.Outputs.GlobalEndpoint;
+    } else {
+      this.prepareCdnComment(distributionConfig);
+      this.prepareCdnOrigins(distributionConfig);
+      this.prepareCdnHeaders(distributionConfig);
+      this.prepareCdnPriceClass(distributionConfig);
+      this.prepareCdnAliases(distributionConfig);
+      this.prepareCdnLogging(distributionConfig);
+      this.prepareCdnWaf(distributionConfig);
+      this.prepareApiGlobalEndpointRecord(resources);
     }
 
-    const distributionConfig = resources.Resources.ApiDistribution.Properties.DistributionConfig;
-    this.prepareApiRegionalEndpointRecord(resources);
-    this.prepareComment(distributionConfig);
-    this.prepareOrigins(distributionConfig);
-    this.prepareHeaders(distributionConfig);
-    this.preparePriceClass(distributionConfig);
-    this.prepareAliases(distributionConfig);
-    this.prepareLogging(distributionConfig);
-    this.prepareWaf(distributionConfig);
-    this.prepareApiGlobalEndpointRecord(resources);
     this.prepareApiRegionalBasePathMapping(resources);
+    this.prepareApiRegionalEndpointRecord(resources);
 
-    return Promise.all([
-      this.prepareApiRegionalDomainName(resources),
-      this.prepareCertificate(distributionConfig)
-    ]);
+    return this.prepareApiRegionalDomainName(resources)
+      .then(() => {
+        if(createCdn) {
+          return this.prepareCdnCertificate(distributionConfig);
+        } else {
+          delete resources.Resources.ApiDistribution;
+        }
+      });
   }
 
   prepareApiRegionalDomainName(resources) {
@@ -117,6 +123,9 @@ class Plugin {
   }
 
   prepareApiRegionalBasePathMapping(resources) {
+    const apiStubProperties = resources.Resources.ApiGatewayStubDeployment.Properties;
+    apiStubProperties.StageName = this.options.stage;
+
     const properties = resources.Resources.ApiRegionalBasePathMapping.Properties;
     properties.Stage = this.options.stage;
   }
@@ -151,17 +160,16 @@ class Plugin {
     }
   }
 
-  prepareComment(distributionConfig) {
+  prepareCdnComment(distributionConfig) {
     const name = this.serverless.getProvider('aws').naming.getApiGatewayName();
-    distributionConfig.Comment = `API: ${name} (${this.options.region})`;
+    distributionConfig.Comment = `API: ${name}`;
   }
 
-  prepareOrigins(distributionConfig) {
+  prepareCdnOrigins(distributionConfig) {
     distributionConfig.Origins[0].DomainName = this.regionalDomainName;
-    distributionConfig.Origins[0].OriginPath = `/${this.options.stage}`;
   }
 
-  prepareHeaders(distributionConfig) {
+  prepareCdnHeaders(distributionConfig) {
     const headers = this.serverless.service.custom.cdn.headers;
 
     if (headers) {
@@ -171,7 +179,7 @@ class Plugin {
     }
   }
 
-  preparePriceClass(distributionConfig) {
+  prepareCdnPriceClass(distributionConfig) {
     const priceClass = this.serverless.service.custom.cdn.priceClass;
 
     if (priceClass) {
@@ -181,7 +189,7 @@ class Plugin {
     }
   }
 
-  prepareAliases(distributionConfig) {
+  prepareCdnAliases(distributionConfig) {
     const aliases = this.serverless.service.custom.cdn.aliases;
 
     if (aliases) {
@@ -191,7 +199,7 @@ class Plugin {
     }
   }
 
-  prepareCertificate(distributionConfig) {
+  prepareCdnCertificate(distributionConfig) {
     const acmCertificateArn = this.serverless.service.custom.cdn.acmCertificateArn;
 
     if(acmCertificateArn) {
@@ -208,7 +216,7 @@ class Plugin {
     }
   }
 
-  prepareLogging(distributionConfig) {
+  prepareCdnLogging(distributionConfig) {
     const logging = this.serverless.service.custom.cdn.logging;
 
     if (logging) {
@@ -220,7 +228,7 @@ class Plugin {
     }
   }
 
-  prepareWaf(distributionConfig) {
+  prepareCdnWaf(distributionConfig) {
     const webACLId = this.serverless.service.custom.cdn.webACLId;
 
     if (webACLId) {

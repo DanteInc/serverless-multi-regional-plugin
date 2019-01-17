@@ -43,11 +43,28 @@ custom:
     # webACLId:
 ```
 
-* If an acmCertificateArn is not supplied, it will be derived from the domain name if one exists.
-* If a healthCheckId is not supplied, a minimal healthcheck will be created automatically
+Alternate minimal configuration
+In this configuration, the necessary configuration for certificates and domain names will be derived from the primary domain name.
+In addition, default healthchecks will be added for each region that hit a '/healthcheck' endpoint on each API.
+
+```
+plugins:
+  - serverless-multi-regional-plugin
+
+custom:
+  dns:
+    domainName: somedomain.example.com
+  cdn:
+    region: us-east-1
+    aliases:
+      - ${self:custom.dns.domainName}
+```
+
 
 4. Deploy to each region
 
+* If an acmCertificateArn is not supplied, it will be derived from the domain name if one exists.
+* If a healthCheckId is not supplied, a minimal healthcheck will be created automatically
 
 ## Related Documentation
 * [Building a Multi-region Serverless Application with Amazon API Gateway and AWS Lambda](https://aws.amazon.com/blogs/compute/building-a-multi-region-serverless-application-with-amazon-api-gateway-and-aws-lambda)

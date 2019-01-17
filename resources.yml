@@ -1,5 +1,13 @@
 ---
 Resources:
+  ApiGatewayStubDeployment:
+      Type: AWS::ApiGateway::Deployment
+      DependsOn: ApiGatewayMethodProxyVarAny
+      Properties:
+        Description: Stub Gateway Deployment
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        StageName: ${opt:stage}
   ApiRegionalDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
@@ -10,6 +18,7 @@ Resources:
           - REGIONAL
   ApiRegionalBasePathMapping:
     Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: ApiGatewayStubDeployment
     Properties:
       DomainName:
         Ref: ApiRegionalDomainName
