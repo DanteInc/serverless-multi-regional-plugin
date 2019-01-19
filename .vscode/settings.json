@@ -1,0 +1,10 @@
+{
+  "eslint.validate": ["javascript"],
+  "eslint.autoFixOnSave": true,
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "prettier.singleQuote": true,
+  "prettier.semi": false,
+  "prettier.printWidth": 100,
+  "javascript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false
+}
