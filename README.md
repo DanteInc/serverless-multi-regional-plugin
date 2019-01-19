@@ -1,16 +1,20 @@
 # serverless-multi-region-plugin
 
+[![Build Status](https://travis-ci.com/unbill/serverless-multi-region-plugin.svg?branch=master)](https://travis-ci.com/unbill/serverless-multi-region-plugin)
+
 This plugin will add the resources to configure API Gateway regional endpoints and a global endpoint with CloudFront.
 This plugin was forked from serverless-multi-regional-plugin, enhanced and simplified for a true turn-key experience.
 
 ### What does it do?
-This plugin will: 
-* Set up API Gateways for your lambdas in each region
-* Set up a custom domain in each region for the API Gateway and specify the appropriate base path
-* Set up a basic HTTPS healthcheck for the API in each region
-* Set up Route 53 for latency based routing with failover between regions based on the healthcheck created
-* Set up CloudFormation in front of Route 53 failover with TLS 1.2 specified
-* Set up Route 53 with the desired domain name in front of Route 53 
+
+This plugin will:
+
+- Set up API Gateways for your lambdas in each region
+- Set up a custom domain in each region for the API Gateway and specify the appropriate base path
+- Set up a basic HTTPS healthcheck for the API in each region
+- Set up Route 53 for latency based routing with failover between regions based on the healthcheck created
+- Set up CloudFormation in front of Route 53 failover with TLS 1.2 specified
+- Set up Route 53 with the desired domain name in front of Route 53
 
 <img src="multi-regional-api.png" width="700">
 
@@ -22,11 +26,12 @@ npm install serverless-multi-region-plugin --save-dev
 
 ## Prerequisites: Create your hosted zone and certificates
 
-Using the diagram above as an example the hosted zone would be for _example.com_ and the certificate would be for _*.example.com_. Create the same certificate in each region to support the regional endpoints. The global endpoint requires a certificate in the us-east-1 region.
+Using the diagram above as an example the hosted zone would be for _example.com_ and the certificate would be for _\*.example.com_. Create the same certificate in each region to support the regional endpoints. The global endpoint requires a certificate in the us-east-1 region.
 
 ## Configuration
 
 ### Minimal configuration
+
 In this configuration, the necessary configuration for certificates and domain names will be derived from the primary domain name.
 In addition, default healthchecks will be added for each region that hit a '/healthcheck' endpoint on each API.
 
@@ -51,8 +56,9 @@ custom:
 ```
 
 ### Customized Configuration
+
 This is the configuration example from the original "serverless-multi-regional-plugin".
-It's important to note that all of these settings can be used with the minimal configuration above 
+It's important to note that all of these settings can be used with the minimal configuration above
 and they will override the convention-based settings.
 
 ```
@@ -65,13 +71,13 @@ custom:
   # Settings used for API Gateway and Route 53
   dns:
     domainName: ${self:service}.example.com
-    # Explicity specify the regional domain name. 
+    # Explicity specify the regional domain name.
     # This must be unique per stage but must be the same in each region for failover to function properly
     regionalDomainName: ${self:custom.dns.domainName}-${opt:stage}
     # Specify the resource path for the healthcheck (only applicable if you don't specify a healthcheckId below)
     # the default is /${opt:stage}/healthcheck
     healthCheckResourcePath: /${opt:stage}/healthcheck
-    # Settings per region for API Gateway and Route 53 
+    # Settings per region for API Gateway and Route 53
     us-east-1:
       # Specify a certificate by its ARN
       acmCertificateArn: arn:aws:acm:us-east-1:870671212434:certificate/55555555-5555-5555-5555-5555555555555555
@@ -110,11 +116,12 @@ custom:
     webACLId: id-for-your-webacl
 ```
 
-
 ## Deploy to each region
+
 You now perform a serverless depoyment to each region you want your Lambda to operate in.  
 The items you have specified above are set up appropriately for each region.
 You now have a Lambda API with cross-region failover.
 
 ## Related Documentation
-* [Building a Multi-region Serverless Application with Amazon API Gateway and AWS Lambda](https://aws.amazon.com/blogs/compute/building-a-multi-region-serverless-application-with-amazon-api-gateway-and-aws-lambda)
+
+- [Building a Multi-region Serverless Application with Amazon API Gateway and AWS Lambda](https://aws.amazon.com/blogs/compute/building-a-multi-region-serverless-application-with-amazon-api-gateway-and-aws-lambda)
