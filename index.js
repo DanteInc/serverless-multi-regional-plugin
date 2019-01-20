@@ -92,7 +92,7 @@ class Plugin {
     this.prepareApiRegionalEndpointRecord(resources)
     this.prepareApiRegionalHealthCheck(resources)
 
-    return this.prepareApiRegionalDomainName(resources).then(() => {
+    return this.prepareApiRegionalDomainSettings(resources).then(() => {
       if (createCdn) {
         return this.prepareCdnCertificate(distributionConfig)
       } else {
@@ -111,7 +111,7 @@ class Plugin {
     return regionalDomainName
   }
 
-  prepareApiRegionalDomainName(resources) {
+  prepareApiRegionalDomainSettings(resources) {
     const properties = resources.Resources.ApiRegionalDomainName.Properties
 
     properties.DomainName = this.regionalDomainName

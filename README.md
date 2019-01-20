@@ -120,6 +120,7 @@ custom:
 
 You now perform a serverless depoyment to each region you want your Lambda to operate in.  
 The items you have specified above are set up appropriately for each region.
+
 You now have a Lambda API with cross-region failover.
 
 ## Related Documentation
