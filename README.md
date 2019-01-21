@@ -2,10 +2,13 @@
 
 [![Build Status](https://travis-ci.com/unbill/serverless-multi-region-plugin.svg?branch=master)](https://travis-ci.com/unbill/serverless-multi-region-plugin)
 
-This plugin will add the resources to configure API Gateway regional endpoints and a global endpoint with CloudFront.
+TLDR;
+This plugin adds resources to configure API Gateway regional endpoints for the regions you specify and a global endpoint
+in front of a CloudFront installation to front the regional APIs.
+
 This plugin was forked from serverless-multi-regional-plugin, enhanced and simplified for a true turn-key experience.
 
-### What does it do?
+## More details?
 
 This plugin will:
 
@@ -33,7 +36,8 @@ Using the diagram above as an example the hosted zone would be for _example.com_
 ### Minimal configuration
 
 In this configuration, the necessary configuration for certificates and domain names will be derived from the primary domain name.
-In addition, default healthchecks will be added for each region that hit a '/healthcheck' endpoint on each API.
+In addition, default healthchecks will be added for each region. It is assumed that your api has a '/healthcheck' endpoint.
+See the Customized Configuration below to change the healthcheck path.
 
 In your serverless.yml:
 
@@ -118,10 +122,13 @@ custom:
 
 ## Deploy to each region
 
-You now perform a serverless depoyment to each region you want your Lambda to operate in.  
-The items you have specified above are set up appropriately for each region.
+You've got your configuration all set.
+Now perform a serverless depoyment to each region you want your Lambda to operate in.  
+The items you have specified above are set up appropriately for each region
+and non-regional resources such as CloudFront and Route 53 are also set up via CloudFormation in your primary region.
 
 You now have a Lambda API with cross-region failover.
+<img height="300" src="https://indiefilmto.com/wp-content/uploads/2016/05/bf93b516ffd153d5de526eac73a2d784_-success-kid-meme-needs-success-is-meme_704-396.jpg">
 
 ## Related Documentation
 
