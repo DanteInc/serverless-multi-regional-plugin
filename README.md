@@ -17,7 +17,7 @@ This plugin will:
 - Set up a basic HTTPS healthcheck for the API in each region
 - Set up Route 53 for latency based routing with failover between regions based on the healthcheck created
 - Set up CloudFormation in front of Route 53 failover with TLS 1.2 specified
-- Set up Route 53 with the desired domain name in front of Route 53
+- Set up Route 53 with the desired domain name in front of CloudFront
 
 <img src="multi-regional-api.png" width="700">
 
