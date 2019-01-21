@@ -123,11 +123,13 @@ custom:
 ## Deploy to each region
 
 You've got your configuration all set.
+
 Now perform a serverless depoyment to each region you want your Lambda to operate in.  
 The items you have specified above are set up appropriately for each region
 and non-regional resources such as CloudFront and Route 53 are also set up via CloudFormation in your primary region.
 
-You now have a Lambda API with cross-region failover.
+You now have a Lambda API with cross-region failover!!!
+
 <img height="300" src="https://indiefilmto.com/wp-content/uploads/2016/05/bf93b516ffd153d5de526eac73a2d784_-success-kid-meme-needs-success-is-meme_704-396.jpg">
 
 ## Related Documentation
