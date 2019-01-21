@@ -49,8 +49,8 @@ custom:
     # In this setup, almost everything is derived from this domain name
     domainName: somedomain.example.com
 
-  cdn:
   # Settings used for CloudFront
+  cdn:
     # Indicates which CloudFormation region deployment used to provision CloudFront (because you only need to provision CloudFront once)
     region: us-east-1
 ```
