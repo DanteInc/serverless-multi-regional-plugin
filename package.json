@@ -1,15 +1,17 @@
 {
-  "name": "serverless-multi-regional-plugin",
-  "version": "1.0.1",
-  "description": "Deploy an API Gateway service in multiple regions with a global CloudFront distribution",
-  "author": "John Gilbert <john.gilbert@danteinc.com> (danteinc.com)",
+  "name": "serverless-multi-region-plugin",
+  "version": "1.2.3",
+  "description": "Deploy an API Gateway service in multiple regions with a global CloudFront distribution and health checks",
+  "author": "John Gilbert <john.gilbert@danteinc.com> (danteinc.com), Biller Direct Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DanteInc/serverless-multi-regional-plugin.git"
+    "url": "git+https://github.com/unbill/serverless-multi-region-plugin.git"
   },
   "keywords": [
     "serverless",
+    "sls",
+    "plugin",
     "serverless plugin",
     "api gateway",
     "cloudfront",
@@ -23,13 +25,14 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint --fix index.js",
-    "test": "npm run lint"
+    "test": "jest"
   },
   "devDependencies": {
-    "eslint": "^5.3.0"
+    "eslint": "^5.12.0",
+    "jest": "^23.6.0"
   },
   "dependencies": {
-    "js-yaml": "^3.10.0",
-    "lodash": "^4.13.1"
+    "js-yaml": "^3.12.1",
+    "lodash": "^4.17.11"
   }
 }

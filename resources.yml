@@ -1,5 +1,13 @@
 ---
 Resources:
+  ApiGatewayStubDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayMethodProxyVarAny
+    Properties:
+      Description: Stub Gateway Deployment
+      RestApiId:
+        Ref: ApiGatewayRestApi
+      StageName: ${opt:stage}
   ApiRegionalDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
@@ -10,24 +18,44 @@ Resources:
           - REGIONAL
   ApiRegionalBasePathMapping:
     Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: ApiGatewayStubDeployment
     Properties:
-      # BasePath: !Ref basePath
       DomainName:
         Ref: ApiRegionalDomainName
       RestApiId:
         Ref: ApiGatewayRestApi
+      Stage: ${opt:stage}
+  ApiRegionalHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    DependsOn: ApiGatewayStubDeployment
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        ResourcePath: /${opt:stage}/healthcheck
+        FullyQualifiedDomainName:
+          Fn::Join:
+            - ''
+            - - Ref: ApiGatewayRestApi
+              - '.execute-api.'
+              - Ref: AWS::Region
+              - '.amazonaws.com'
+        RequestInterval: 30
+        FailureThreshold: 3
+        Regions: [us-east-1, us-west-1, us-west-2]
   ApiRegionalEndpointRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: ${self:custom.dns.hostedZoneId}
+      HostedZoneName: ${self:custom.dns.hostedZoneName}
       Name:
         Fn::Join:
-          - ""
+          - ''
           - - Ref: ApiRegionalDomainName
             - .
       Region: ${opt:region}
       SetIdentifier: ${opt:region}
-      HealthCheckId: ${self:custom.dns.${opt:region}.healthCheckId}
+      HealthCheckId:
+        Ref: ApiRegionalHealthCheck
       Type: A
       AliasTarget:
         HostedZoneId:
@@ -46,11 +74,10 @@ Resources:
         Origins:
           - Id: ApiGateway
             DomainName: ${self:custom.dns.regionalDomainName}
-            OriginPath: /${opt:stage}
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
-              OriginSSLProtocols: [ TLSv1.2 ]
+              OriginSSLProtocols: [TLSv1.2]
         Enabled: true
         HttpVersion: http2
         Aliases: ${self:custom.cdn.aliases}
@@ -84,6 +111,7 @@ Resources:
         ViewerCertificate:
           AcmCertificateArn: ${self:custom.cdn.acmCertificateArn}
           SslSupportMethod: sni-only
+          MinimumProtocolVersion: 'TLSv1.2_2018'
         Logging:
           IncludeCookies: true
           Bucket: ${self:custom.cdn.logging.bucket}
@@ -93,6 +121,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: ${self:custom.dns.hostedZoneId}
+      HostedZoneName: ${self:custom.dns.hostedZoneName}
       Name: ${self:custom.dns.domainName}.
       Type: A
       AliasTarget:
@@ -105,17 +134,16 @@ Resources:
 Outputs:
   ApiDistribution:
     Value:
-      Fn::GetAtt: [ ApiDistribution, DomainName ]
+      Fn::GetAtt: [ApiDistribution, DomainName]
   RegionalEndpoint:
     Value:
       Fn::Join:
-        - ""
+        - ''
         - - https://
           - Ref: ApiRegionalDomainName
-          - /${opt:stage}
   GlobalEndpoint:
     Value:
       Fn::Join:
-        - ""
+        - ''
         - - https://
           - ${self:custom.dns.domainName}
