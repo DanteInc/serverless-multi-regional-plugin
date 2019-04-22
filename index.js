@@ -45,6 +45,7 @@ class Plugin {
 
   prepareResources(resources) {
     this.prepareApiRegionalDomainName(resources);
+    this.prepareApiRegionalBasePathMapping(resources);
     this.prepareApiRegionalEndpointRecord(resources);
 
     const globalDomainName = this.serverless.service.custom.dns.domainName;
@@ -87,6 +88,11 @@ class Plugin {
     } else {
       delete properties.RegionalCertificateArn;
     }
+  }
+
+  prepareApiRegionalBasePathMapping(resources) {
+    const properties = resources.Resources.ApiRegionalBasePathMapping.Properties;
+    properties.Stage = `${this.options.stage}`;
   }
 
   prepareApiRegionalEndpointRecord(resources) {
