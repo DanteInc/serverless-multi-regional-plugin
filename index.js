@@ -80,7 +80,8 @@ class Plugin {
     const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
     properties.DomainName = regionalDomainName;
 
-    const acmCertificateArn = this.serverless.service.custom.dns[this.options.region].acmCertificateArn;
+    const acmCertificateArn = (this.serverless.service.custom.dns[this.options.region] && this.serverless.service.custom.dns[this.options.region].acmCertificateArn)
+      || this.serverless.service.custom.dns.acmCertificateArn;
     if (acmCertificateArn) {
       properties.RegionalCertificateArn = acmCertificateArn;
     } else {
@@ -101,16 +102,12 @@ class Plugin {
     properties.Region = this.options.region;
     properties.SetIdentifier = this.options.region;
 
-    const healthCheckId = this.serverless.service.custom.dns[this.options.region].healthCheckId;
+    const healthCheckId = (this.serverless.service.custom.dns[this.options.region] && this.serverless.service.custom.dns[this.options.region].healthCheckId)
+      || this.serverless.service.custom.dns.healthCheckId;
     if (healthCheckId) {
       properties.HealthCheckId = healthCheckId;
     } else {
       delete properties.HealthCheckId;
-    }
-
-    const elements = resources.Outputs.RegionalEndpoint.Value['Fn::Join'][1];
-    if (elements[2]) {
-      elements[2] = `/${this.options.stage}`;
     }
   }
 
@@ -123,7 +120,6 @@ class Plugin {
     const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
 
     distributionConfig.Origins[0].DomainName = regionalDomainName;
-    distributionConfig.Origins[0].OriginPath = `/${this.options.stage}`;
   }
 
   prepareHeaders(distributionConfig) {

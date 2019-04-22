@@ -16,6 +16,7 @@ Resources:
         Ref: ApiRegionalDomainName
       RestApiId:
         Ref: ApiGatewayRestApi
+      Stage: ${opt:stage}
   ApiRegionalEndpointRecord:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -46,7 +47,7 @@ Resources:
         Origins:
           - Id: ApiGateway
             DomainName: ${self:custom.dns.regionalDomainName}
-            OriginPath: /${opt:stage}
+            OriginPath: /
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
@@ -112,7 +113,6 @@ Outputs:
         - ""
         - - https://
           - Ref: ApiRegionalDomainName
-          - /${opt:stage}
   GlobalEndpoint:
     Value:
       Fn::Join:
