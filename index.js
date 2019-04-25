@@ -91,8 +91,11 @@ class Plugin {
   }
 
   prepareApiRegionalBasePathMapping(resources) {
+    const dependsOn = resources.Resources.ApiRegionalBasePathMapping.DependsOn;
+    dependsOn[0] = `ApiGatewayDeployment${this.serverless.instanceId}`;
+
     const properties = resources.Resources.ApiRegionalBasePathMapping.Properties;
-    properties.Stage = `${this.options.stage}`;
+    properties.Stage = this.options.stage;
   }
 
   prepareApiRegionalEndpointRecord(resources) {

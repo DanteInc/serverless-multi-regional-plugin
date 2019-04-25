@@ -9,6 +9,9 @@ Resources:
         Types:
           - REGIONAL
   ApiRegionalBasePathMapping:
+    DependsOn:
+      - ApiGatewayDeployment${sls:instanceId}
+      - ApiRegionalDomainName
     Type: AWS::ApiGateway::BasePathMapping
     Properties:
       # BasePath: !Ref basePath
@@ -18,6 +21,8 @@ Resources:
         Ref: ApiGatewayRestApi
       Stage: ${opt:stage}
   ApiRegionalEndpointRecord:
+    DependsOn:
+      - ApiRegionalDomainName
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: ${self:custom.dns.hostedZoneId}
@@ -91,6 +96,8 @@ Resources:
           Prefix: ${self:custom.cdn.logging.prefix}
         WebACLId: ${self:custom.cdn.webACLId}
   ApiGlobalEndpointRecord:
+    DependsOn:
+      - ApiDistribution
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: ${self:custom.dns.hostedZoneId}

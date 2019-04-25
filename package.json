@@ -1,6 +1,6 @@
 {
   "name": "serverless-multi-regional-plugin",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Deploy an API Gateway service in multiple regions with a global CloudFront distribution",
   "author": "John Gilbert <john.gilbert@danteinc.com> (danteinc.com)",
   "license": "MIT",
