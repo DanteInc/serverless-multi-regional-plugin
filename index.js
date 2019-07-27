@@ -127,8 +127,12 @@ class Plugin {
 
   prepareOrigins(distributionConfig) {
     const regionalDomainName = this.serverless.service.custom.dns.regionalDomainName;
+    const originPath = this.serverless.service.custom.cdn.originPath;
 
     distributionConfig.Origins[0].DomainName = regionalDomainName;
+    if (originPath) {
+      distributionConfig.Origins[0].OriginPath = `/${originPath}`;
+    }
   }
 
   prepareHeaders(distributionConfig) {

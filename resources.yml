@@ -45,6 +45,8 @@ Resources:
             - ApiRegionalDomainName
             - RegionalDomainName
   ApiDistribution:
+    DependsOn:
+      - ApiRegionalBasePathMapping
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
@@ -52,7 +54,7 @@ Resources:
         Origins:
           - Id: ApiGateway
             DomainName: ${self:custom.dns.regionalDomainName}
-            OriginPath: /
+            # OriginPath: /${opt:stage}
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
