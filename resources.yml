@@ -2,7 +2,6 @@
 Resources:
   ApiGatewayStubDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: ApiGatewayMethodProxyVarAny
     Properties:
       Description: Stub Gateway Deployment
       RestApiId:

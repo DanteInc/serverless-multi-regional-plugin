@@ -1,6 +1,6 @@
 {
   "name": "serverless-multi-region-plugin",
-  "version": "1.2.3",
+  "version": "1.2.5",
   "description": "Deploy an API Gateway service in multiple regions with a global CloudFront distribution and health checks",
   "author": "John Gilbert <john.gilbert@danteinc.com> (danteinc.com), Biller Direct Team",
   "license": "MIT",
@@ -28,11 +28,11 @@
     "test": "jest"
   },
   "devDependencies": {
-    "eslint": "^5.12.0",
-    "jest": "^23.6.0"
+    "eslint": "^6.1.0",
+    "jest": "^24.8.0"
   },
   "dependencies": {
-    "js-yaml": "^3.12.1",
-    "lodash": "^4.17.11"
+    "js-yaml": "^3.13.1",
+    "lodash": "^4.17.15"
   }
 }
