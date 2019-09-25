@@ -15,7 +15,7 @@ This plugin will:
 - Set up API Gateways for your lambdas in each region
 - Set up a custom domain in each region for the API Gateway and specify the appropriate base path
 - Set up a basic HTTPS healthcheck for the API in each region
-- Set up Route 53 for latency based routing with failover between regions based on the healthcheck created
+- Set up Route 53 for failover based routing with failover between regions based on the healthcheck created
 - Set up CloudFormation in front of Route 53 failover with TLS 1.2 specified
 - Set up Route 53 with the desired domain name in front of CloudFront
 
@@ -87,9 +87,12 @@ custom:
       acmCertificateArn: arn:aws:acm:us-east-1:870671212434:certificate/55555555-5555-5555-5555-5555555555555555
       # Use your own healthcheck by it's ID
       healthCheckId: 44444444-4444-4444-4444-444444444444
+      # Failover type (if not present, defaults to Latency based failover)
+      failover: PRIMARY
     us-west-2:
       acmCertificateArn: arn:aws:acm:us-west-2:111111111111:certificate/55555555-5555-5555-5555-5555555555555555
       healthCheckId: 33333333-3333-3333-3333-333333333333
+      failover: SECONDARY
 
   # Settings used for CloudFront
   cdn:
@@ -124,7 +127,7 @@ custom:
 
 You've got your configuration all set.
 
-Now perform a serverless depoyment to each region you want your Lambda to operate in.  
+Now perform a serverless depoyment to each region you want your Lambda to operate in.
 The items you have specified above are set up appropriately for each region
 and non-regional resources such as CloudFront and Route 53 are also set up via CloudFormation in your primary region.
 
