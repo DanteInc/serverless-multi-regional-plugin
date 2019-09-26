@@ -2,6 +2,7 @@
 Resources:
   ApiGatewayStubDeployment:
     Type: AWS::ApiGateway::Deployment
+    DependsOn: ${self:custom.gatewayMethodDependency}
     Properties:
       Description: Stub Gateway Deployment
       RestApiId:

@@ -113,7 +113,6 @@ class Plugin {
 
   prepareApiRegionalDomainSettings(resources) {
     const properties = resources.Resources.ApiRegionalDomainName.Properties
-
     properties.DomainName = this.regionalDomainName
 
     const regionSettings = this.serverless.service.custom.dns[this.options.region]
@@ -135,8 +134,10 @@ class Plugin {
   }
 
   prepareApiRegionalBasePathMapping(resources) {
-    const apiStubProperties = resources.Resources.ApiGatewayStubDeployment.Properties
-    apiStubProperties.StageName = this.options.stage
+    const apiGatewayStubDeployment = resources.Resources.ApiGatewayStubDeployment
+    apiGatewayStubDeployment.DependsOn =
+      this.serverless.service.custom.gatewayMethodDependency || 'ApiGatewayMethodProxyVarAny'
+    apiGatewayStubDeployment.Properties.StageName = this.options.stage
 
     const properties = resources.Resources.ApiRegionalBasePathMapping.Properties
     properties.Stage = this.options.stage
