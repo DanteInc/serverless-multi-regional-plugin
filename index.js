@@ -156,8 +156,10 @@ class Plugin {
 
     const regionSettings = this.serverless.service.custom.dns[this.options.region]
     if (regionSettings && regionSettings.failover) {
+      delete properties.Region
       properties.Failover = regionSettings.failover
     } else {
+      delete properties.Failover
       properties.Region = this.options.region
     }
 
