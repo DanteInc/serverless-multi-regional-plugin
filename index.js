@@ -154,6 +154,11 @@ class Plugin {
       properties.HostedZoneName = `${this.hostName}.`
     }
 
+    const regionSettings = this.serverless.service.custom.dns[this.options.region]
+    if (regionSettings && regionSettings.failover) {
+      properties.Failover = regionSettings.failover
+    }
+
     properties.Region = this.options.region
     properties.SetIdentifier = this.options.region
 

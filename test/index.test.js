@@ -213,4 +213,29 @@ describe('Plugin', () => {
     )
     expect(resources.Resources.ApiRegionalHealthCheck).toBeUndefined()
   })
+
+  it('will api regional failover settings from explicit settings', async () => {
+    const serverless = {
+      service: {
+        custom: {
+          dns: {
+            'us-east-1': { failover: 'PRIMARY' }
+          }
+        }
+      }
+    }
+    const options = { stage: 'staging', region: 'us-east-1' }
+    const plugin = new Plugin(serverless, options)
+    plugin.regionalDomainName = 'regional.domainname.com'
+
+    const resources = {
+      Resources: {
+        ApiRegionalEndpointRecord: { Properties: {} }
+      },
+      Outputs: { RegionalEndpoint: { Value: { ['Fn::Join']: ['', '', ''] } } }
+    }
+
+    await plugin.prepareApiRegionalEndpointRecord(resources)
+    expect(resources.Resources.ApiRegionalEndpointRecord.Properties.Failover).toBe('PRIMARY')
+  })
 })
