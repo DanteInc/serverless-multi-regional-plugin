@@ -90,7 +90,7 @@ describe('Plugin', () => {
     )
   })
 
-  it('will set API regional base path', async () => {
+  it('will set API regional base path defaults', async () => {
     const serverless = createServerlessStub()
     const options = { stage: 'staging', region: 'us-east-1' }
     const plugin = new Plugin(serverless, options)
@@ -104,8 +104,29 @@ describe('Plugin', () => {
 
     await plugin.prepareApiRegionalBasePathMapping(resources)
 
+    expect(resources.Resources.ApiGatewayStubDeployment.DependsOn).toBe(
+      'ApiGatewayMethodProxyVarAny'
+    )
     expect(resources.Resources.ApiGatewayStubDeployment.Properties.StageName).toBe('staging')
     expect(resources.Resources.ApiRegionalBasePathMapping.Properties.Stage).toBe('staging')
+  })
+
+  it('will set API Gateway Stub DependsOn', async () => {
+    const serverless = createServerlessStub()
+    serverless.service.custom.gatewayMethodDependency = 'SomeMethodToDependOn'
+
+    const options = { stage: 'staging', region: 'us-east-1' }
+    const plugin = new Plugin(serverless, options)
+
+    const resources = {
+      Resources: {
+        ApiGatewayStubDeployment: { Properties: {} },
+        ApiRegionalBasePathMapping: { Properties: {} }
+      }
+    }
+    await plugin.prepareApiRegionalBasePathMapping(resources)
+
+    expect(resources.Resources.ApiGatewayStubDeployment.DependsOn).toBe('SomeMethodToDependOn')
   })
 
   it('will set API regional endpoint', async () => {

@@ -48,6 +48,10 @@ plugins:
 
 # Add this to the standard SLS "custom" region
 custom:
+  # The API Gateway method CloudFormation LogicalID to await. Defaults to ApiGatewayMethodProxyVarAny.
+  # Aspects of the templates must await this completion to be created properly.
+  gatewayMethodDependency: ApiGatewayMethodProxyVarAny
+
   # Settings used for API Gateway and Route 53
   dns:
     # In this setup, almost everything is derived from this domain name
@@ -72,6 +76,10 @@ plugins:
 
 # Add this to the standard SLS "custom" region
 custom:
+  # The API Gateway method CloudFormation LogicalID to await. Defaults to ApiGatewayMethodProxyVarAny.
+  # Aspects of the templates must await this completion to be created properly.
+  gatewayMethodDependency: ApiGatewayMethodProxyVarAny
+
   # Settings used for API Gateway and Route 53
   dns:
     domainName: ${self:service}.example.com
