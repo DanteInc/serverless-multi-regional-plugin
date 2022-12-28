@@ -7,9 +7,16 @@ class Plugin {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
-    this.hooks = {
-      'before:deploy:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
-    };
+
+    if (Number(serverless.version.charAt(0)) >= 3) {
+      this.hooks = {
+        'before:package:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
+      };
+    } else {
+      this.hooks = {
+        'before:deploy:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
+      };
+    }
   }
 
   createDeploymentArtifacts() {
