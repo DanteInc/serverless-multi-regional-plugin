@@ -115,7 +115,14 @@ class Plugin {
       delete properties.hostedZoneId;
     }
 
-    properties.Region = this.options.region;
+    const failover =  (this.serverless.service.custom.dns[this.options.region] && this.serverless.service.custom.dns[this.options.region].failover);
+    if (failover) {
+      properties.Failover = failover;
+      properties.Region = undefined;
+
+    } else {
+      properties.Region = this.options.region;
+    }
     properties.SetIdentifier = this.options.region;
 
     const healthCheckId = (this.serverless.service.custom.dns[this.options.region] && this.serverless.service.custom.dns[this.options.region].healthCheckId)
